@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 
 export class ColorService {
-  private static instance: ColorService
+  private static instance: ColorService | null = null
   private readonly seaLevel: number = 0
   private readonly maxElevation: number = 8848 // Hauteur de l'Everest
   private readonly minElevation: number = -11034 // Fosse des Mariannes
@@ -82,7 +82,7 @@ export class ColorService {
   /**
    * Applique les couleurs à la géométrie en fonction de l'élévation
    * @param geometry Géométrie de la sphère
-   * @param elevationData Données d'élévation
+   * @param getElevation Fonction pour obtenir l'élévation à une position donnée
    */
   public applyColorsToGeometry(geometry: THREE.SphereGeometry, getElevation: (lat: number, lon: number) => number): void {
     const positions = geometry.attributes.position.array
@@ -127,4 +127,6 @@ export class ColorService {
   }
 }
 
-export default ColorService.getInstance() 
+const colorService = ColorService.getInstance()
+export { colorService }
+export default colorService 

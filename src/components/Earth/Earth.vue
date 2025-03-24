@@ -25,30 +25,40 @@ const init = async () => {
 
   // Configuration de base de Three.js
   scene = new THREE.Scene()
+  scene.background = new THREE.Color(0x000000) // Fond noir pour mieux voir
+
   camera = new THREE.PerspectiveCamera(
-    75,
+    45,  // FOV plus étroit pour moins de distorsion
     container.value.clientWidth / container.value.clientHeight,
-    0.1,
-    1000
+    1,   // Near plane plus éloigné
+    2000 // Far plane plus éloigné
   )
   
-  renderer = new THREE.WebGLRenderer({ antialias: true })
+  renderer = new THREE.WebGLRenderer({ 
+    antialias: true,
+    logarithmicDepthBuffer: true // Meilleure gestion de la profondeur
+  })
+  renderer.setPixelRatio(window.devicePixelRatio) // Meilleure qualité sur écrans haute résolution
   renderer.setSize(container.value.clientWidth, container.value.clientHeight)
   container.value.appendChild(renderer.domElement)
 
   // Chargement des données d'élévation
   await elevationService.loadElevationData()
 
-  // Création de la sphère de base
-  const geometry = new THREE.SphereGeometry(5, 128, 128)
+  // Créer la géométrie de la sphère
+  const geometry = new THREE.SphereGeometry(
+    10,           // rayon
+    512,          // segments en largeur (doublé)
+    512,          // segments en hauteur (doublé)
+  )
   
   // Application de l'élévation à la géométrie
   elevationService.applyElevationToGeometry(geometry)
 
   const material = new THREE.MeshPhongMaterial({
     vertexColors: true,
-    shininess: 5,
-    specular: new THREE.Color(0x111111),
+    shininess: 10,
+    specular: new THREE.Color(0x333333),
   })
   
   // Application des couleurs basées sur l'élévation réelle
@@ -58,21 +68,22 @@ const init = async () => {
   })
   
   sphere = new THREE.Mesh(geometry, material)
+  // Suppression de la mise à l'échelle qui perturbait les calculs
   scene.add(sphere)
 
   // Configuration de la caméra et des lumières
-  camera.position.set(0, 0, 15)
+  camera.position.set(0, 5, 15)  // Position initiale plus proche et légèrement surélevée
   
   // Ajout de la lumière
   const ambientLight = new THREE.AmbientLight(0x666666)
   scene.add(ambientLight)
 
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
-  directionalLight.position.set(1, 1, 1).normalize()
+  directionalLight.position.set(5, 3, 5).normalize()
   scene.add(directionalLight)
 
   const backLight = new THREE.DirectionalLight(0xffffff, 0.3)
-  backLight.position.set(-1, -1, -1).normalize()
+  backLight.position.set(-5, -3, -5).normalize()
   scene.add(backLight)
 
   // Configuration des contrôles
@@ -83,9 +94,9 @@ const init = async () => {
   controls.dampingFactor = 0.05        // Vitesse d'amortissement
   controls.rotateSpeed = 0.5           // Vitesse de rotation
   controls.enableZoom = true           // Activation du zoom
-  controls.zoomSpeed = 1.0             // Vitesse du zoom
-  controls.minDistance = 7             // Distance minimale de zoom (plus près de la Terre)
-  controls.maxDistance = 30            // Distance maximale de zoom (plus loin de la Terre)
+  controls.zoomSpeed = 0.5             // Vitesse de zoom réduite pour plus de précision
+  controls.minDistance = 5             // Distance minimale de zoom réduite
+  controls.maxDistance = 50            // Distance maximale de zoom augmentée
   controls.enablePan = false           // Désactivation du déplacement latéral
   controls.autoRotate = false          // Rotation automatique désactivée par défaut
   controls.autoRotateSpeed = 0.5       // Vitesse de rotation automatique si activée
