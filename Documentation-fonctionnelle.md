@@ -107,11 +107,20 @@ Créer une visualisation 3D interactive de la Terre permettant d'explorer son é
 - Système de couleurs
 - Affichage des reliefs
 
-### 2. Frise Chronologique [40% 🔄]
-- Navigation temporelle
-- Affichage des ères
-- Curseur de temps
-- Informations contextuelles
+### 2. Frise Chronologique [80% ✅]
+- **Interface Interactive** [100% ✅]
+  - Navigation temporelle libre
+  - Points d'événements avec tooltips
+  - Curseur de progression fluide
+  - Support tactile et souris
+  - Mode sombre/clair
+  - Échelle de temps logarithmique
+
+- **Synchronisation** [40% 🔄]
+  - Mise à jour du globe
+  - Transitions fluides
+  - Événements majeurs
+  - Informations contextuelles
 
 ### 3. Panneau de Recherche [0% ❌]
 - Champ de recherche
@@ -419,4 +428,53 @@ Créer une visualisation 3D interactive de la Terre permettant d'explorer son é
 - Cohérence des données
 - Navigation fluide
 - Transitions naturelles
-- Interface unifiée 
+- Interface unifiée
+
+### Design System [40% 🔄]
+
+#### Tokens de Design [100% ✅]
+- **Couleurs**
+  - Palette primaire (50-900)
+  - Palette de gris (50-900)
+  - Couleurs sémantiques (success, warning, error, info)
+  - Support du mode sombre
+
+- **Typographie**
+  - Familles de polices (sans-serif, monospace)
+  - Tailles de police (xs à 2xl)
+  - Poids de police (light à bold)
+  - Hauteurs de ligne
+
+- **Espacement**
+  - Échelle cohérente (0-32)
+  - Unités en rem
+  - Marges et paddings
+
+- **Layout**
+  - Border radius (none à full)
+  - Box shadows (none à lg)
+  - Z-index standardisés
+
+#### Composants [20% 🔄]
+- **Timeline** [100% ✅]
+  - Navigation temporelle
+  - Points d'événements
+  - Tooltips
+  - Support tactile
+  - Mode sombre/clair
+
+- **À Implémenter** [0% ❌]
+  - Boutons et contrôles
+  - Inputs et formulaires
+  - Navigation
+  - Cartes et panneaux
+  - Modales et popovers
+  - Indicateurs de chargement
+  - Messages et notifications
+
+#### Documentation [0% ❌]
+- Guide de style
+- Storybook
+- Tests
+- Exemples d'utilisation
+- Guide d'implémentation 

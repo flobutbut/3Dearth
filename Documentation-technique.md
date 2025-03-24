@@ -491,4 +491,127 @@ export default defineConfig({
 - **CacheService**
   - Gestion du cache local
   - Invalidation intelligente
-  - Compression des données 
+  - Compression des données
+
+## Design System
+
+### Tokens
+- **Colors**
+  ```typescript
+  colors: {
+    primary: { 50: string, ..., 900: string }
+    gray: { 50: string, ..., 900: string }
+    success: { light: string, dark: string }
+    warning: { light: string, dark: string }
+    error: { light: string, dark: string }
+    info: { light: string, dark: string }
+  }
+  ```
+
+- **Typography**
+  ```typescript
+  typography: {
+    fontFamily: {
+      sans: string
+      mono: string
+    }
+    fontSize: {
+      xs: string
+      sm: string
+      base: string
+      lg: string
+      xl: string
+      '2xl': string
+      // ...
+    }
+    fontWeight: {
+      light: number
+      normal: number
+      medium: number
+      bold: number
+    }
+  }
+  ```
+
+- **Spacing**
+  ```typescript
+  spacing: {
+    0: string
+    1: string
+    2: string
+    // ...
+    32: string
+  }
+  ```
+
+- **Layout**
+  ```typescript
+  layout: {
+    borderRadius: {
+      none: string
+      sm: string
+      md: string
+      lg: string
+      full: string
+    }
+    boxShadow: {
+      none: string
+      sm: string
+      md: string
+      lg: string
+    }
+  }
+  ```
+
+### Composants
+
+#### Timeline.vue
+- **Structure**
+  ```vue
+  <template>
+    <div class="timeline">
+      <div class="timeline-content">
+        <div class="timeline-info">...</div>
+        <div class="timeline-progress">...</div>
+        <div class="timeline-events">...</div>
+      </div>
+    </div>
+  </template>
+  ```
+
+- **Fonctionnalités**
+  - Navigation temporelle libre
+  - Points d'événements avec tooltips
+  - Curseur de progression
+  - Support tactile et souris
+  - Mode sombre/clair
+
+- **État**
+  ```typescript
+  interface TimelineEvent {
+    date: string
+    title: string
+    description: string
+    timestamp: number
+  }
+
+  const currentPosition = ref(0)
+  const isDragging = ref(false)
+  ```
+
+- **Méthodes**
+  ```typescript
+  const getCurrentTimestamp = (percentage: number): number
+  const getEventPosition = (timestamp: number): number
+  const findClosestEvent = (timestamp: number): TimelineEvent
+  const startDragging = (event: MouseEvent | TouchEvent): void
+  const handleDrag = (event: MouseEvent | TouchEvent): void
+  const stopDragging = (): void
+  const goToEvent = (event: TimelineEvent): void
+  ```
+
+- **Styles**
+  - Utilisation des tokens de design
+  - Support du mode sombre
+  - Animations fluides
+  - Gestion des z-index pour les tooltips 

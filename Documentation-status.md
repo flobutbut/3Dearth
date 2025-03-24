@@ -43,10 +43,11 @@ Ce document suit **l'état d'avancement réel** du projet. Il doit :
 - ✅ Gestion des reliefs réalistes
 - ❌ Système de recherche
 
-### Timeline.vue [40% 🔄]
+### Timeline.vue [80% ✅]
 - ✅ Interface utilisateur de base
-- ✅ Navigation temporelle
-- 🔄 Synchronisation
+- ✅ Navigation temporelle libre
+- ✅ Points d'événements avec tooltips
+- ✅ Synchronisation avec le Design System
 - ❌ Données géologiques
 
 ### Controls.vue [0% ❌]
@@ -120,6 +121,21 @@ Ce document suit **l'état d'avancement réel** du projet. Il doit :
 - ❌ APIs REST/GraphQL
 - ❌ Sécurité
 
+## Design System [40% 🔄]
+- ✅ Tokens de design :
+  * Couleurs (light/dark)
+  * Typographie
+  * Espacement
+  * Layout (border-radius, shadows)
+- ✅ Premier composant (Timeline)
+- 🔄 Composants de base :
+  * Boutons
+  * Inputs
+  * Icons
+- ❌ Documentation des composants
+- ❌ Storybook
+- ❌ Tests
+
 ## Tâches Complétées
 
 ### Core
@@ -132,7 +148,7 @@ Ce document suit **l'état d'avancement réel** du projet. Il doit :
 
 ### Composants
 - ✅ Earth.vue
-- 🔄 Timeline.vue
+- ✅ Timeline.vue
 - ❌ Controls.vue
 
 ### Services
@@ -140,14 +156,24 @@ Ce document suit **l'état d'avancement réel** du projet. Il doit :
 - ✅ ColorService
 - 🔄 GeologicalService
 
+### Design System
+- ✅ Architecture des tokens
+- ✅ Système de couleurs (light/dark)
+- ✅ Système typographique
+- ✅ Système d'espacement
+- ✅ Système de layout
+- ✅ Premier composant (Timeline)
+- ❌ Documentation
+- ❌ Guide de style
+
 ## Tâches en Cours
 
 ### Priorités Immédiates
-1. 🔄 Développement de la timeline
-2. 🔄 Système de recherche
-3. 🔄 Intégration des données géologiques
-4. 🔄 Tests des nouveaux composants
-5. 🔄 Documentation
+1. 🔄 Développement des composants du Design System
+2. 🔄 Documentation du Design System
+3. 🔄 Tests des composants
+4. 🔄 Storybook
+5. 🔄 Guide de style
 
 ### Problèmes Rencontrés
 1. ⚠️ Performance avec les données d'élévation
@@ -174,24 +200,24 @@ Ce document suit **l'état d'avancement réel** du projet. Il doit :
 ## Prochaines Étapes
 
 ### Court Terme (1-2 semaines)
-1. 🔄 Développement de la timeline
-2. 🔄 Système de recherche
-3. 🔄 Tests des composants
-4. 🔄 Intégration GPlates
-5. 🔄 Système de cache
-6. ❌ Mise en place du Design System :
+1. ❌ Mise en place du Design System :
    - Architecture des composants de base
    - Guide de style et tokens
    - Documentation des composants
    - Storybook pour les tests visuels
+2. 🔄 Intégration GPlates
+3. 🔄 Système de cache
+4. 🔄 Tests des composants existants
+5. 🔄 Optimisation des performances de rendu
 
 ### Moyen Terme (2-4 semaines)
 1. 🔄 Intégration des données géologiques
-2. 🔄 Optimisation des performances
-3. 🔄 Documentation complète
-4. ❌ Données météorologiques
-5. ❌ Données archéologiques
-6. ❌ Composants du Design System :
+2. ❌ Données météorologiques
+3. ❌ Données archéologiques
+4. 🔄 Documentation complète
+5. ❌ Développement de la timeline (reporté après intégration des données)
+6. ❌ Système de recherche (reporté après intégration des données)
+7. ❌ Composants du Design System :
    - Boutons et contrôles
    - Panneaux d'information
    - Sliders et inputs
@@ -208,8 +234,7 @@ Ce document suit **l'état d'avancement réel** du projet. Il doit :
 2. ❌ Optimisations finales
 3. ❌ Tests utilisateurs
 4. ❌ Système de données complet
-5. ❌ Optimisation des performances
-6. ❌ Extension du Design System :
+5. ❌ Extension du Design System :
    - Thèmes sombres/clairs
    - Accessibilité (WCAG 2.1)
    - Responsive design
