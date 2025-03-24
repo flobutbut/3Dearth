@@ -16,6 +16,36 @@ export class ColorService {
   }
 
   /**
+   * Fonction de lissage pour les transitions de couleurs
+   */
+  private smoothstep(edge0: number, edge1: number, x: number): number {
+    // Limiter x entre 0 et 1
+    x = Math.max(0, Math.min((x - edge0) / (edge1 - edge0), 1))
+    // Fonction de lissage
+    return x * x * (3 - 2 * x)
+  }
+
+  /**
+   * Interpolation linéaire entre deux couleurs HSL
+   */
+  private lerpHSL(h1: number, s1: number, l1: number, h2: number, s2: number, l2: number, t: number): THREE.Color {
+    // Gestion de la transition circulaire pour la teinte
+    let h: number
+    if (Math.abs(h2 - h1) > 0.5) {
+      if (h2 > h1) h1 += 1
+      else h2 += 1
+    }
+    h = h1 + (h2 - h1) * t
+    h = ((h % 1) + 1) % 1 // Normaliser entre 0 et 1
+
+    return new THREE.Color().setHSL(
+      h,
+      s1 + (s2 - s1) * t,
+      l1 + (l2 - l1) * t
+    )
+  }
+
+  /**
    * Calcule la couleur en fonction de l'altitude et de la position
    * @param elevation Altitude en mètres
    * @param latitude Latitude en degrés (-90 à 90)
@@ -23,57 +53,65 @@ export class ColorService {
    * @returns Couleur THREE.js
    */
   public getColorForPosition(elevation: number, latitude: number, longitude: number): THREE.Color {
-    // Normalisation de l'élévation entre -1 et 1 par rapport au rayon
+    // Normalisation de l'élévation entre -1 et 1
     const normalizedElevation = elevation < 0 
       ? elevation / Math.abs(this.minElevation)
       : elevation / this.maxElevation
 
     if (elevation <= this.seaLevel) {
-      // Océans : dégradé de bleus pour les profondeurs
+      // Océans : transitions plus douces pour les profondeurs
       const depthFactor = Math.abs(normalizedElevation)
-      return new THREE.Color().setHSL(
-        0.6 + (0.1 * depthFactor), // teinte bleue qui varie avec la profondeur
-        0.9, // saturation élevée pour des bleus plus profonds
-        0.4 - (0.3 * depthFactor) // luminosité qui diminue avec la profondeur
+      const t = this.smoothstep(0, 1, depthFactor)
+      
+      // Transition de bleu clair à bleu profond
+      return this.lerpHSL(
+        0.6, 0.65, 0.5,  // Bleu clair pour les eaux peu profondes
+        0.63, 0.9, 0.2,  // Bleu foncé pour les abysses
+        t
       )
     } else {
-      // Terres émergées
+      // Terres émergées : transitions plus progressives
       const heightFactor = normalizedElevation
       
-      if (heightFactor < 0.1) {
-        // Plages et zones côtières : beige clair
-        return new THREE.Color().setHSL(0.1, 0.3, 0.7)
-      } else if (heightFactor < 0.3) {
-        // Plaines basses : vert
-        const t = (heightFactor - 0.1) / 0.2
-        return new THREE.Color().setHSL(
-          0.3, // teinte verte
-          0.7, // saturation élevée pour un vert vif
-          0.4 - (0.1 * t) // assombrissement progressif
+      if (heightFactor < 0.15) {
+        // Plages et zones côtières : transition douce vers les plaines
+        const t = this.smoothstep(0, 0.15, heightFactor)
+        return this.lerpHSL(
+          0.1, 0.3, 0.8,   // Beige clair (plages)
+          0.25, 0.6, 0.55, // Vert clair (début des terres)
+          t
         )
-      } else if (heightFactor < 0.6) {
-        // Collines et montagnes moyennes : vert foncé à marron
-        const t = (heightFactor - 0.3) / 0.3
-        return new THREE.Color().setHSL(
-          0.3 - (0.25 * t), // transition de vert à marron
-          0.7 - (0.2 * t),
-          0.3 + (0.1 * t)
+      } else if (heightFactor < 0.4) {
+        // Plaines et collines basses
+        const t = this.smoothstep(0.15, 0.4, heightFactor)
+        return this.lerpHSL(
+          0.25, 0.6, 0.55, // Vert clair
+          0.35, 0.7, 0.35, // Vert plus foncé
+          t
         )
-      } else if (heightFactor < 0.8) {
-        // Hautes montagnes : marron à gris
-        const t = (heightFactor - 0.6) / 0.2
-        return new THREE.Color().setHSL(
-          0.05,
-          0.5 - (0.3 * t),
-          0.4 + (0.2 * t)
+      } else if (heightFactor < 0.7) {
+        // Collines et montagnes moyennes
+        const t = this.smoothstep(0.4, 0.7, heightFactor)
+        return this.lerpHSL(
+          0.35, 0.7, 0.35, // Vert foncé
+          0.1, 0.6, 0.4,   // Marron-vert
+          t
+        )
+      } else if (heightFactor < 0.85) {
+        // Montagnes
+        const t = this.smoothstep(0.7, 0.85, heightFactor)
+        return this.lerpHSL(
+          0.1, 0.6, 0.4,   // Marron-vert
+          0.05, 0.4, 0.5,  // Gris-marron
+          t
         )
       } else {
-        // Sommets : gris à blanc (neiges éternelles)
-        const t = (heightFactor - 0.8) / 0.2
-        return new THREE.Color().setHSL(
-          0.05,
-          0.2 - (0.2 * t),
-          0.6 + (0.4 * t)
+        // Hauts sommets et neiges éternelles
+        const t = this.smoothstep(0.85, 1, heightFactor)
+        return this.lerpHSL(
+          0.05, 0.4, 0.5,  // Gris-marron
+          0.05, 0.1, 0.9,  // Blanc neigeux
+          t
         )
       }
     }
@@ -110,7 +148,7 @@ export class ColorService {
       minElevation = Math.min(minElevation, elevation)
       maxElevation = Math.max(maxElevation, elevation)
       
-      // Calcul de la couleur
+      // Calcul de la couleur avec prise en compte de la latitude
       const color = this.getColorForPosition(elevation, latitude, longitude)
       
       // Application de la couleur
