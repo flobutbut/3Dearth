@@ -13,7 +13,7 @@ interface GeologicalEpoch {
 }
 
 export class GeologicalService {
-  private static instance: GeologicalService
+  private static instance: GeologicalService | null = null
   private epochs: GeologicalEpoch[] = []
   private isLoading: boolean = false
 
@@ -26,10 +26,6 @@ export class GeologicalService {
     return GeologicalService.instance
   }
 
-  /**
-   * Charge les données géologiques pour une période donnée
-   * @param time Temps en millions d'années
-   */
   public async loadEpochData(time: number): Promise<void> {
     if (this.isLoading) return
 
@@ -57,12 +53,12 @@ export class GeologicalService {
     }
   }
 
-  /**
-   * Interpole les données entre deux époques
-   * @param time1 Première époque
-   * @param time2 Deuxième époque
-   * @param progress Progression entre 0 et 1
-   */
+  public applyToGeometry(geometry: THREE.SphereGeometry, time: number): void {
+    // TODO: Implémenter la déformation de la géométrie selon les données géologiques
+    // Pour l'instant, on ne fait rien
+    console.log('Application des données géologiques pour le temps:', time)
+  }
+
   public interpolateEpochs(time1: number, time2: number, progress: number): PlateData[] {
     const epoch1 = this.epochs.find(e => e.time === time1)
     const epoch2 = this.epochs.find(e => e.time === time2)
@@ -85,17 +81,8 @@ export class GeologicalService {
       }
     })
   }
-
-  /**
-   * Applique les données géologiques à la géométrie
-   * @param geometry Géométrie de la sphère
-   * @param time Temps en millions d'années
-   */
-  public applyToGeometry(geometry: THREE.SphereGeometry, time: number): void {
-    // TODO: Implémenter la déformation de la géométrie selon les données géologiques
-    // Pour l'instant, on ne fait rien
-    console.log('Application des données géologiques pour le temps:', time)
-  }
 }
 
-export default GeologicalService.getInstance() 
+const geologicalService = GeologicalService.getInstance()
+export { geologicalService }
+export default geologicalService 

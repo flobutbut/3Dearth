@@ -5,6 +5,8 @@ export class ColorService {
   private readonly seaLevel: number = 0
   private readonly maxElevation: number = 8848 // Hauteur de l'Everest
   private readonly minElevation: number = -11034 // Fosse des Mariannes
+  private readonly snowLineBase: number = 0.6 // Seuil de base pour la neige (60% de l'altitude max)
+  private readonly snowLineLatitudeFactor: number = 0.4 // Influence de la latitude sur la ligne de neige
 
   private constructor() {}
 
@@ -46,6 +48,15 @@ export class ColorService {
   }
 
   /**
+   * Calcule le seuil de neige en fonction de la latitude
+   * Plus on s'éloigne de l'équateur, plus la neige apparaît bas
+   */
+  private getSnowLineThreshold(latitude: number): number {
+    const latitudeEffect = Math.abs(latitude) / 90 // 0 à l'équateur, 1 aux pôles
+    return this.snowLineBase - (this.snowLineLatitudeFactor * latitudeEffect)
+  }
+
+  /**
    * Calcule la couleur en fonction de l'altitude et de la position
    * @param elevation Altitude en mètres
    * @param latitude Latitude en degrés (-90 à 90)
@@ -72,45 +83,46 @@ export class ColorService {
     } else {
       // Terres émergées : transitions plus progressives
       const heightFactor = normalizedElevation
+      const snowLine = this.getSnowLineThreshold(latitude)
       
-      if (heightFactor < 0.15) {
-        // Plages et zones côtières : transition douce vers les plaines
-        const t = this.smoothstep(0, 0.15, heightFactor)
+      if (heightFactor < 0.05) {
+        // Plages et zones côtières : transition rapide vers les plaines
+        const t = this.smoothstep(0, 0.05, heightFactor)
         return this.lerpHSL(
-          0.1, 0.3, 0.8,   // Beige clair (plages)
-          0.25, 0.6, 0.55, // Vert clair (début des terres)
+          0.12, 0.4, 0.75,   // Beige plus prononcé pour les plages
+          0.25, 0.65, 0.45,  // Vert plus marqué pour le début des terres
           t
         )
       } else if (heightFactor < 0.4) {
         // Plaines et collines basses
-        const t = this.smoothstep(0.15, 0.4, heightFactor)
+        const t = this.smoothstep(0.05, 0.4, heightFactor)
         return this.lerpHSL(
-          0.25, 0.6, 0.55, // Vert clair
-          0.35, 0.7, 0.35, // Vert plus foncé
+          0.25, 0.65, 0.45,  // Vert plus marqué
+          0.35, 0.7, 0.35,   // Vert plus foncé
           t
         )
-      } else if (heightFactor < 0.7) {
+      } else if (heightFactor < snowLine) {
         // Collines et montagnes moyennes
-        const t = this.smoothstep(0.4, 0.7, heightFactor)
+        const t = this.smoothstep(0.4, snowLine, heightFactor)
         return this.lerpHSL(
           0.35, 0.7, 0.35, // Vert foncé
           0.1, 0.6, 0.4,   // Marron-vert
           t
         )
-      } else if (heightFactor < 0.85) {
-        // Montagnes
-        const t = this.smoothstep(0.7, 0.85, heightFactor)
+      } else if (heightFactor < snowLine + 0.1) {
+        // Transition vers la neige
+        const t = this.smoothstep(snowLine, snowLine + 0.1, heightFactor)
         return this.lerpHSL(
           0.1, 0.6, 0.4,   // Marron-vert
-          0.05, 0.4, 0.5,  // Gris-marron
+          0.0, 0.0, 0.95,  // Blanc pur
           t
         )
       } else {
-        // Hauts sommets et neiges éternelles
-        const t = this.smoothstep(0.85, 1, heightFactor)
+        // Neiges éternelles
+        const t = this.smoothstep(snowLine + 0.1, 1, heightFactor)
         return this.lerpHSL(
-          0.05, 0.4, 0.5,  // Gris-marron
-          0.05, 0.1, 0.9,  // Blanc neigeux
+          0.0, 0.0, 0.95,  // Blanc pur
+          0.0, 0.0, 1.0,   // Blanc brillant
           t
         )
       }

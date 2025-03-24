@@ -247,4 +247,95 @@ Ce document suit **l'état d'avancement réel** du projet. Il doit :
 - Cache des calculs
 - Système de cache distribué
 - Chargement progressif des données
-- Compression des données 
+- Compression des données
+
+# État du Projet
+
+## Fonctionnalités Implémentées
+
+### Rendu 3D de la Terre
+- [x] Sphère de base avec Three.js
+- [x] Contrôles de caméra (rotation, zoom, pan)
+- [x] Éclairage de base
+- [x] Ombres et effets de profondeur
+- [x] Anti-aliasing
+
+### Données d'Élévation
+- [x] Chargement des données ETOPO1
+- [x] Interpolation bilinéaire
+- [x] Application de l'élévation à la géométrie
+- [x] Normalisation des données
+- [x] Optimisation des performances
+
+### Système de Couleurs
+- [x] Couleurs basées sur l'élévation
+- [x] Transitions douces entre les zones
+- [x] Prise en compte de la latitude pour la neige
+- [x] Océans avec profondeur
+- [x] Plages étroites et réalistes
+- [x] Végétation progressive
+- [x] Neige en altitude variable selon la latitude
+
+### Interface Utilisateur
+- [x] Contrôles intuitifs
+- [x] Interface responsive
+- [x] Performance optimisée
+
+## Fonctionnalités en Cours
+
+### Améliorations Visuelles
+- [ ] Ajout d'effets atmosphériques
+- [ ] Amélioration des transitions de couleurs
+- [ ] Optimisation des performances de rendu
+
+### Données Géologiques
+- [ ] Intégration des données géologiques
+- [ ] Textures des roches
+- [ ] Transitions géologiques
+
+## Problèmes Connus
+
+### Performance
+- [ ] Optimisation du chargement des données
+- [ ] Réduction de l'utilisation mémoire
+- [ ] Amélioration du rendu en temps réel
+
+### Visualisation
+- [ ] Correction des artefacts de rendu
+- [ ] Amélioration de la qualité des textures
+- [ ] Optimisation des transitions
+
+## Prochaines Étapes
+
+### Court Terme
+1. Optimisation des performances
+2. Amélioration des transitions de couleurs
+3. Correction des artefacts visuels
+
+### Moyen Terme
+1. Intégration des données géologiques
+2. Ajout d'effets atmosphériques
+3. Amélioration de l'interface utilisateur
+
+### Long Terme
+1. Support des données en temps réel
+2. Mode simulation climatique
+3. Export des données
+
+## Notes de Développement
+
+### Dernières Modifications
+- Réduction de l'étendue des plages (5% de l'élévation max)
+- Amélioration des transitions de couleurs
+- Ajustement de la ligne de neige selon la latitude
+- Optimisation des performances de rendu
+
+### Problèmes Résolus
+- Correction des artefacts de rendu
+- Amélioration de la qualité des transitions
+- Optimisation de l'utilisation mémoire
+
+### Problèmes en Cours
+- Optimisation des performances
+- Amélioration de la qualité visuelle
+- Intégration des données géologiques 

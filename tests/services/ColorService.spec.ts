@@ -1,18 +1,20 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import ColorService from '@/services/color/ColorService'
+import { ColorService } from '@/services/color/ColorService'
 import * as THREE from 'three'
 
 describe('ColorService', () => {
-  let service: typeof ColorService
+  let service: ColorService
 
   beforeEach(() => {
-    service = ColorService
+    // Réinitialiser l'instance du singleton
+    (ColorService as any).instance = null
+    service = ColorService.getInstance()
     vi.clearAllMocks()
   })
 
   it('should be a singleton', () => {
-    const instance1 = ColorService
-    const instance2 = ColorService
+    const instance1 = ColorService.getInstance()
+    const instance2 = ColorService.getInstance()
     expect(instance1).toBe(instance2)
   })
 
@@ -48,22 +50,6 @@ describe('ColorService', () => {
 
     // Mock de la fonction d'élévation
     const mockGetElevation = vi.fn().mockReturnValue(0)
-
-    // Mock pour THREE.Vector3 et THREE.Spherical
-    const mockVector3 = {
-      x: 1, y: 1, z: 1,
-      multiplyScalar: vi.fn().mockReturnThis()
-    }
-
-    const mockSpherical = {
-      phi: Math.PI / 2,
-      theta: Math.PI,
-      setFromVector3: vi.fn().mockReturnThis()
-    }
-
-    vi.spyOn(THREE, 'Vector3').mockImplementation(() => mockVector3 as any)
-    vi.spyOn(THREE, 'Spherical').mockImplementation(() => mockSpherical as any)
-    vi.spyOn(THREE, 'BufferAttribute').mockImplementation(() => ({ needsUpdate: false }) as any)
 
     service.applyColorsToGeometry(mockGeometry as unknown as THREE.SphereGeometry, mockGetElevation)
 
