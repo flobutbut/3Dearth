@@ -1,5 +1,34 @@
 # État d'Avancement - 3Dearth
 
+## Règles de Mise à Jour du Document
+
+Ce document suit **l'état d'avancement réel** du projet. Il doit :
+- Être mis à jour à chaque changement de statut d'une fonctionnalité
+- Utiliser les indicateurs de statut standardisés :
+  * ✅ : Fonctionnalité complétée et testée
+  * 🔄 : En cours de développement
+  * ❌ : Non commencé ou bloqué
+  * ⚠️ : Problème identifié
+- Refléter l'état actuel du développement
+- Être synchronisé avec les commits et les pull requests
+- Servir de tableau de bord pour le suivi du projet
+- Distinguer clairement le statut des fonctionnalités simulées et réelles
+
+## Mode de Fonctionnement Actuel
+
+### Simulation [100% ✅]
+- ✅ Génération procédurale des données (generate_elevation_data.py)
+- ✅ Bruit de Perlin pour le relief
+- ✅ Distribution terre/mer (30/70%)
+- ✅ Élévations proportionnelles
+- ✅ Effet de latitude
+
+### Données Réelles [0% ❌]
+- ❌ Intégration ETOPO1
+- ❌ Données GPlates
+- ❌ API Météo
+- ❌ Sources archéologiques
+
 ## Progression Globale
 - Base 3D : 100% ✅
 - Recherche et Timeline : 40% 🔄
@@ -28,16 +57,20 @@
 ## État des Services
 
 ### ElevationService [100% ✅]
-- ✅ Chargement des données (1200×600 points)
-- ✅ Calcul précis des élévations (-4087m à +5853m)
+- ✅ Chargement des données simulées (1200×600 points)
+- ✅ Calcul précis des élévations (-11034m à +8848m)
 - ✅ Application proportionnelle au rayon terrestre
 - ✅ Optimisation des performances
+- ❌ Intégration données ETOPO1 réelles
 
 ### ColorService [100% ✅]
-- ✅ Système de couleurs basé sur l'élévation réelle
-- ✅ Zones climatiques
-- ✅ Transitions fluides
+- ✅ Système de couleurs avec transitions douces
+- ✅ Interpolation HSL optimisée
+- ✅ Gestion avancée des teintes
+- ✅ Seuils d'élévation adaptés
+- ❌ Zones climatiques
 - ✅ Performance optimisée
+- ✅ Transitions naturelles entre zones
 
 ### GeologicalService [40% 🔄]
 - ✅ Structure de base
@@ -146,6 +179,11 @@
 3. 🔄 Tests des composants
 4. 🔄 Intégration GPlates
 5. 🔄 Système de cache
+6. ❌ Mise en place du Design System :
+   - Architecture des composants de base
+   - Guide de style et tokens
+   - Documentation des composants
+   - Storybook pour les tests visuels
 
 ### Moyen Terme (2-4 semaines)
 1. 🔄 Intégration des données géologiques
@@ -153,6 +191,17 @@
 3. 🔄 Documentation complète
 4. ❌ Données météorologiques
 5. ❌ Données archéologiques
+6. ❌ Composants du Design System :
+   - Boutons et contrôles
+   - Panneaux d'information
+   - Sliders et inputs
+   - Cartes et légendes
+   - Tooltips et modales
+   - Navigation et menus
+   - Graphiques et visualisations
+   - Composants de timeline
+   - Indicateurs de chargement
+   - Messages d'erreur et notifications
 
 ### Long Terme (1-2 mois)
 1. ❌ Fonctionnalités avancées
@@ -160,6 +209,17 @@
 3. ❌ Tests utilisateurs
 4. ❌ Système de données complet
 5. ❌ Optimisation des performances
+6. ❌ Extension du Design System :
+   - Thèmes sombres/clairs
+   - Accessibilité (WCAG 2.1)
+   - Responsive design
+   - Animations et transitions
+   - Internationalisation
+   - Tests de performance
+   - Documentation exhaustive
+   - Templates de pages
+   - Composants complexes spécifiques
+   - Intégration avec les services de données
 
 ## Notes de Développement
 
@@ -168,6 +228,9 @@
 - Contrôles orbitaux optimisés (zoom 5-50 unités)
 - Résolution de la sphère augmentée (512×512)
 - Calculs d'élévation précis et réalistes
+- Transitions de couleurs douces avec smoothstep
+- Interpolation HSL optimisée pour les teintes
+- Seuils d'élévation adaptés pour un rendu naturel
 - Architecture modulaire pour les intégrations
 - Pattern Singleton implémenté
 - Stores Pinia fonctionnels

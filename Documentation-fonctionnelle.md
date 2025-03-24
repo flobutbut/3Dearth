@@ -1,5 +1,39 @@
 # Spécifications Fonctionnelles - 3Dearth
 
+## Règles de Mise à Jour du Document
+
+Ce document représente les **objectifs et spécifications à atteindre** pour le projet. Il doit :
+- Décrire toutes les fonctionnalités prévues, qu'elles soient implémentées ou non
+- Indiquer le statut de chaque fonctionnalité [✅, 🔄, ❌]
+- Être mis à jour quand de nouvelles fonctionnalités sont planifiées
+- Servir de référence pour le développement futur
+- Ne jamais supprimer une fonctionnalité prévue, même si elle n'est pas encore implémentée
+- Distinguer clairement les fonctionnalités de simulation des données réelles
+
+## Modes de Fonctionnement
+
+### Mode Simulation [100% ✅]
+- Génération procédurale des données via Python
+  - Relief terrestre via bruit de Perlin
+  - Distribution terre/mer réaliste (30/70%)
+  - Élévations proportionnelles
+  - Micro-reliefs et détails
+- Données générées localement
+  - Fichier binaire simplifié
+  - Résolution 1200×600
+  - Mise à jour à la demande
+
+### Mode Données Réelles [0% ❌]
+- Intégration des sources de données externes
+  - ETOPO1 pour l'élévation globale
+  - GPlates pour la tectonique
+  - OpenWeatherMap pour la météo
+  - Sources archéologiques
+- Mises à jour en temps réel
+  - API REST et WebSocket
+  - Cache distribué
+  - Synchronisation des données
+
 ## Objectifs du Projet
 
 ### Objectif Principal
@@ -113,11 +147,17 @@ Créer une visualisation 3D interactive de la Terre permettant d'explorer son é
   - Animation de caméra
 
 ### 2. Données d'Élévation 
-- **Génération des Données** [100% ✅]
-  - Données ETOPO1 simplifiées (1200×600)
-  - Distribution terre/mer réaliste
-  - Élévations proportionnelles (-4087m à +5853m)
-  - Variations précises selon la latitude
+- **Génération des Données (Mode Simulation)** [100% ✅]
+  - Données générées via bruit de Perlin (1200×600)
+  - Distribution terre/mer réaliste (30/70%)
+  - Élévations proportionnelles (-11034m à +8848m)
+  - Variations selon la latitude
+
+- **Données Réelles (Mode Production)** [0% ❌]
+  - Intégration ETOPO1
+  - Résolution native (1 arc-minute)
+  - Mises à jour périodiques
+  - Validation des données
 
 - **Application des Reliefs** [100% ✅]
   - Conversion précise des coordonnées
@@ -140,10 +180,24 @@ Créer une visualisation 3D interactive de la Terre permettant d'explorer son é
 
 ### 4. Système de Couleurs
 - **Coloration Procédurale** [100% ✅]
-  - Dégradés selon l'altitude
-  - Zones climatiques
-  - Transitions fluides
+  - Transitions douces via smoothstep
+  - Interpolation HSL optimisée
+  - Gestion avancée des teintes
+  - Seuils d'élévation adaptés
   - Optimisation des performances
+  - Zones de transition progressives :
+    * Océans : bleu clair à profond
+    * Plages : beige à vert clair (0-15%)
+    * Plaines : vert clair à foncé (15-40%)
+    * Collines : vert foncé à marron (40-70%)
+    * Montagnes : marron à gris (70-85%)
+    * Sommets : gris à blanc neigeux (85-100%)
+  - Adaptation climatique [0% ❌] :
+    * Variation des teintes selon la latitude
+    * Ajustement des couleurs selon le climat
+    * Transitions naturelles entre zones climatiques
+    * Influence des saisons sur la végétation
+    * Représentation des zones de glace polaires
 
 - **Adaptation Temporelle** [0% ❌]
   - Évolution des couleurs

@@ -1,5 +1,48 @@
 # Documentation Technique - 3Dearth
 
+## Règles de Mise à Jour du Document
+
+Ce document décrit **l'implémentation technique actuelle** du projet. Il doit :
+- Ne documenter que les fonctionnalités réellement implémentées
+- Être mis à jour à chaque modification technique significative
+- Refléter exactement l'état du code
+- Inclure tous les détails techniques nécessaires à la compréhension
+- Être synchronisé avec le code source
+- Ne pas mentionner les fonctionnalités prévues mais non implémentées
+- Distinguer clairement l'implémentation de simulation de l'implémentation production
+
+## État Actuel : Mode Simulation
+
+Le projet fonctionne actuellement en mode simulation, utilisant des données générées procéduralement :
+
+### Génération des Données
+- Script : `generate_elevation_data.py`
+- Technologie : Python avec numpy et noise
+- Méthode : Bruit de Perlin multi-octaves
+- Paramètres :
+  - Dimensions : 2400×4800 points (réduit à 1200×600)
+  - Distribution terre/mer : 30/70%
+  - Élévations : -11034m à +8848m
+  - Effet de latitude : Variation progressive des élévations
+- Sortie : Fichier binaire `etopo1_simplified.bin`
+
+### Traitement des Données
+- Génération des continents (bruit de Perlin)
+  - Échelle : 200.0
+  - Octaves : 12
+  - Persistence : 0.55
+  - Lacunarity : 2.2
+- Détails du terrain
+  - Échelle : 100.0
+  - Octaves : 8
+  - Persistence : 0.65
+  - Lacunarity : 2.4
+- Micro-reliefs
+  - Échelle : 50.0
+  - Octaves : 6
+  - Persistence : 0.45
+  - Lacunarity : 2.8
+
 ## Architecture Technique
 
 ### Stack Technologique
@@ -94,18 +137,36 @@ Les services suivants utilisent ce pattern :
 
 ### ColorService
 - Pattern Singleton
-- Système de couleurs basé sur l'élévation réelle
-  - Format : HSL
-  - Calcul par vertex
+- Système de couleurs avancé avec transitions douces
+  - Format : HSL avec interpolation linéaire
+  - Transitions progressives via smoothstep
+  - Optimisation des transitions de teintes
+  - Gestion des zones d'élévation avec seuils adaptés
   - Optimisation des buffers
-  - Gestion des zones climatiques
 - Méthodes techniques
+  - `smoothstep(edge0: number, edge1: number, x: number): number`
+    - Fonction de lissage pour transitions douces
+    - Limite les valeurs entre 0 et 1
+    - Courbe de Hermite cubique (3t² - 2t³)
+  - `lerpHSL(h1: number, s1: number, l1: number, h2: number, s2: number, l2: number, t: number): THREE.Color`
+    - Interpolation linéaire entre deux couleurs HSL
+    - Gestion de la transition circulaire des teintes
+    - Normalisation des valeurs HSL
   - `getColorForPosition(elevation: number, lat: number, lon: number): THREE.Color`
-    - Océans : dégradé de bleus (-4087m à 0m)
-    - Terres : vert à blanc (0m à 5853m)
+    - Océans (-11034m à 0m)
+      - Bleu clair (HSL: 0.6, 0.65, 0.5) pour eaux peu profondes
+      - Bleu foncé (HSL: 0.63, 0.9, 0.2) pour abysses
+    - Terres (0m à 8848m)
+      - Plages (0-15%) : beige à vert clair
+      - Plaines (15-40%) : vert clair à vert foncé
+      - Collines (40-70%) : vert foncé à marron-vert
+      - Montagnes (70-85%) : marron-vert à gris-marron
+      - Sommets (85-100%) : gris-marron à blanc neigeux
   - `applyColorsToGeometry(geometry: THREE.BufferGeometry): void`
     - Application des couleurs par vertex
-    - Gestion des statistiques
+    - Calcul des coordonnées sphériques
+    - Statistiques d'élévation en temps réel
+    - Optimisation des buffers de couleur
 
 ### GeologicalService
 - Pattern Singleton
