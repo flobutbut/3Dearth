@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import Earth from '@/components/Earth/Earth.vue'
-import Timeline from '@/components/Timeline/Timeline.vue'
+import Earth from './components/Earth.vue'
+import Timeline from './components/Timeline/Timeline.vue'
 </script>
 
 <template>
@@ -8,9 +8,7 @@ import Timeline from '@/components/Timeline/Timeline.vue'
     <div class="earth-container">
       <Earth />
     </div>
-    <div class="timeline-container">
-      <Timeline />
-    </div>
+    <Timeline />
   </div>
 </template>
 
@@ -32,15 +30,13 @@ body {
   overflow: hidden;
   background: #000;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .earth-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
+  flex: 1;
+  position: relative;
 }
 
 .timeline-container {

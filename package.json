@@ -1,35 +1,33 @@
 {
-  "name": "web-3dearth",
+  "name": "web-3Dearth",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "dev": "yarn copy:gplates && vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "test": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui"
+    "download:gplates": "tsc -p scripts/tsconfig.json && node scripts-dist/download_gplates_data.js",
+    "copy:gplates": "tsc -p scripts/tsconfig.json && node scripts-dist/copy_gplates_data.js",
+    "analyze:gplates": "tsc -p scripts/tsconfig.json && node scripts-dist/analyze_gplates_data.js"
   },
   "dependencies": {
-    "@types/three": "^0.174.0",
-    "lucide-vue-next": "^0.483.0",
-    "pinia": "^3.0.1",
-    "three": "^0.174.0",
+    "@types/xml2js": "^0.4.14",
+    "axios": "^1.8.4",
+    "three": "^0.161.0",
     "vue": "^3.5.13",
-    "vue-slider-component": "^4.1.0-beta.7"
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
-    "@testing-library/vue": "^8.1.0",
-    "@types/node": "^22.13.11",
-    "@vitejs/plugin-vue": "^5.2.1",
-    "@vitest/ui": "3.0.9",
-    "@vue/test-utils": "^2.4.6",
+    "@types/node": "^22.13.13",
+    "@types/three": "^0.174.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@vitejs/plugin-vue": "^5.2.3",
     "@vue/tsconfig": "^0.7.0",
-    "happy-dom": "^17.4.4",
-    "typescript": "~5.7.2",
-    "vite": "^6.2.0",
-    "vitest": "^3.0.9",
-    "vue-tsc": "^2.2.4"
+    "eslint": "^8.56.0",
+    "typescript": "^5.8.2",
+    "vite": "^5.1.0"
   }
 }

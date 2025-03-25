@@ -10,5 +10,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       'three/addons': 'three/examples/jsm'
     }
+  },
+  server: {
+    port: 3000,
+    open: true
   }
 })

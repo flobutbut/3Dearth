@@ -17,31 +17,37 @@ Le projet fonctionne actuellement en mode simulation, utilisant des données gé
 
 ### Génération des Données
 - Script : `generate_elevation_data.py`
-- Technologie : Python avec numpy et noise
+- Technologie : Python avec numpy, scipy et noise
 - Méthode : Bruit de Perlin multi-octaves
 - Paramètres :
-  - Dimensions : 2400×4800 points (réduit à 1200×600)
+  - Dimensions initiales : 4800×9600 points
+  - Dimensions finales : 2400×4800 points (réduit par 2)
   - Distribution terre/mer : 30/70%
   - Élévations : -11034m à +8848m
   - Effet de latitude : Variation progressive des élévations
-- Sortie : Fichier binaire `etopo1_simplified.bin`
+- Sortie : Fichier binaire `etopo1_simplified.bin` (44 MB)
 
 ### Traitement des Données
 - Génération des continents (bruit de Perlin)
+  - Échelle : 800.0
+  - Octaves : 20
+  - Persistence : 0.6
+  - Lacunarity : 2.1
+- Détails du terrain
+  - Échelle : 400.0
+  - Octaves : 16
+  - Persistence : 0.7
+  - Lacunarity : 2.2
+- Micro-reliefs
   - Échelle : 200.0
   - Octaves : 12
-  - Persistence : 0.55
-  - Lacunarity : 2.2
-- Détails du terrain
-  - Échelle : 100.0
-  - Octaves : 8
-  - Persistence : 0.65
-  - Lacunarity : 2.4
-- Micro-reliefs
-  - Échelle : 50.0
-  - Octaves : 6
-  - Persistence : 0.45
-  - Lacunarity : 2.8
+  - Persistence : 0.5
+  - Lacunarity : 2.5
+- Réduction de résolution
+  - Méthode : scipy.ndimage.zoom
+  - Facteur : 0.5
+  - Ordre : 3 (interpolation cubique)
+  - Préservation des détails optimisée
 
 ## Architecture Technique
 
@@ -78,7 +84,7 @@ Service de gestion des données d'élévation.
 
 #### Configuration
 - Format : Float32Array (binaire)
-- Dimensions : 2400×1200 points
+- Dimensions : 1200×2400 points (réduit de 4800×9600)
 - Plage : -11034m à +8848m
 - Rayon terrestre : 6 371 000m
 
@@ -362,3 +368,168 @@ Composant de navigation temporelle.
   - Border radius : none, sm, md, lg, full
   - Box shadow : none, sm, md, lg
   - Z-index : base (0) à tooltip (80)
+
+# Documentation Technique - GPlates Data
+
+## Structure des Données
+
+Les données GPlates sont organisées en deux types principaux :
+
+### 1. Données de Rotation (Zahirovic2022)
+
+Les données de rotation décrivent le mouvement des plaques tectoniques au fil du temps. Chaque rotation contient :
+
+```typescript
+interface Rotation {
+  time: number;        // Temps en millions d'années (0 = présent)
+  lat: number;         // Latitude du pôle de rotation
+  lon: number;         // Longitude du pôle de rotation
+  angle: number;       // Angle de rotation en degrés
+  plateId1: number;    // ID de la plaque en mouvement
+  plateId2: number;    // ID de la plaque de référence
+  comment: string;     // Commentaire ou métadonnées
+}
+```
+
+### 2. Données Géométriques (GPMLZ)
+
+Les données géométriques sont divisées en plusieurs catégories :
+
+#### Côtes (Coastlines)
+- Types : `gpml:Basin`, `gpml:ClosedContinentalBoundary`, `gpml:IslandArc`
+- 296 géométries
+- Définit les contours des masses terrestres actuelles
+
+#### Polygones Continentaux (ContinentalPolygons)
+- Types : `gpml:ClosedContinentalBoundary`, `gpml:IslandArc`
+- 47 géométries
+- Représente les masses continentales principales
+
+#### Zones de Fracture (FractureZones)
+- Type : `gpml:UnclassifiedFeature`
+- 5282 géométries
+- Représente les zones de fracture océanique
+
+#### Dorsales Éteintes (ExtinctRidges)
+- Type : `gpml:UnclassifiedFeature`
+- 233 géométries
+- Représente les anciennes dorsales océaniques
+
+#### Zones de Déformation (DeformationZones)
+- Type : `gpml:UnclassifiedFeature`
+- 852 géométries
+- Représente les zones de déformation tectonique
+
+Chaque géométrie est structurée comme suit :
+
+```typescript
+interface Geometry {
+  type: string;              // Type de feature GPlates
+  coordinates: number[][];   // Liste de points [longitude, latitude]
+  plateId?: number;         // ID de la plaque principale
+  conjugatePlateId?: number; // ID de la plaque conjuguée
+  name?: string;            // Nom de la feature
+}
+```
+
+## Services
+
+### PlateRotationService
+
+Service singleton qui gère les rotations des plaques tectoniques :
+
+```typescript
+class PlateRotationService {
+  // Obtenir l'instance unique
+  static getInstance(): PlateRotationService
+
+  // Charger les données de rotation
+  async loadRotations(rotations: Rotation[]): Promise<void>
+
+  // Obtenir la plage de temps disponible
+  getTimeRange(): { min: number; max: number }
+
+  // Définir le temps actuel
+  setCurrentTime(time: number): void
+
+  // Obtenir le temps actuel
+  getCurrentTime(): number
+
+  // Obtenir la matrice de rotation pour une plaque
+  getRotationMatrixForPlate(plateId: number): THREE.Matrix4
+}
+```
+
+Le service effectue :
+1. Le regroupement des rotations par plaque
+2. Le tri des rotations par temps
+3. L'interpolation entre les rotations
+4. Le calcul des matrices de transformation
+
+## Composants
+
+### Earth.vue
+
+Composant principal qui :
+1. Affiche le globe terrestre
+2. Gère les groupes de géométries :
+   - `continents` : Polygones des masses continentales
+   - `boundaries` : Lignes des frontières de plaques
+3. Applique les rotations aux géométries via le `PlateRotationService`
+
+Événements gérés :
+- `timerange-updated` : Émis lors du chargement des données
+- `time-changed` : Reçu pour mettre à jour les rotations
+
+## Organisation des Fichiers
+
+Les données sont organisées dans le dossier `data/gplates/` :
+
+```
+data/gplates/
+├── rotations/
+│   └── Zahirovic_etal_2022_OptimisedMantleRef_and_NNRMantleRef.rot
+├── coastlines/
+│   └── Global_EarthByte_GPlates_PresentDay_Coastlines.gpmlz
+├── continents/
+│   └── Global_EarthByte_GPlates_PresentDay_ContinentalPolygons.gpmlz
+├── seafloor/
+│   ├── FZ_cookiecut.gpmlz
+│   ├── ExtinctRidges_cookiecut.gpmlz
+│   └── DZ_cookiecut.gpmlz
+└── parsed_data.json
+```
+
+Le fichier `parsed_data.json` contient toutes les données parsées et structurées, prêtes à être utilisées par l'application.
+
+## Utilisation des Données
+
+Pour utiliser ces données dans l'application :
+
+1. Charger le fichier `parsed_data.json`
+2. Les rotations peuvent être utilisées pour calculer la position des plaques à un moment donné
+3. Les géométries peuvent être utilisées pour :
+   - Afficher les contours des continents
+   - Visualiser les zones de fracture
+   - Représenter les dorsales éteintes
+   - Montrer les zones de déformation
+
+## Mise à Jour des Données
+
+Pour mettre à jour les données :
+
+1. Installer GPlates 2.5.0 ou supérieur
+2. Copier les nouveaux fichiers dans les dossiers appropriés
+3. Exécuter le script de parsing :
+   ```bash
+   yarn download:gplates
+   ```
+
+## Notes Importantes
+
+- Les coordonnées sont en degrés (longitude, latitude)
+- Le temps est en millions d'années, 0 représente le présent
+- Les angles de rotation sont en degrés
+- Les IDs de plaques sont uniques et correspondent au modèle de plaques de GPlates
+- Les matrices de rotation sont calculées en utilisant THREE.js
+- L'interpolation est linéaire pour la latitude, longitude et l'angle

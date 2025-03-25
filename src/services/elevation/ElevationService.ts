@@ -3,8 +3,8 @@ import * as THREE from 'three'
 export class ElevationService {
   private static instance: ElevationService | null = null
   private elevationData: Float32Array | null = null
-  private width: number = 2400  // largeur (longitude) - mise à jour pour la nouvelle résolution
-  private height: number = 1200  // hauteur (latitude) - mise à jour pour la nouvelle résolution
+  private width: number = 4800  // largeur (longitude) - mise à jour pour la résolution réduite par 2
+  private height: number = 2400  // hauteur (latitude) - mise à jour pour la résolution réduite par 2
   private maxElevation: number = -Infinity
   private minElevation: number = Infinity
   private readonly earthRadius: number = 6371000 // Rayon moyen de la Terre en mètres
@@ -69,7 +69,7 @@ export class ElevationService {
 
     // Convertir en coordonnées de grille
     const x = (lon + 180) / 360 * (this.width - 1)
-    const y = (lat + 90) / 180 * (this.height - 1)
+    const y = (90 - lat) / 180 * (this.height - 1)  // Inverser la latitude
 
     // Obtenir les indices des quatre points les plus proches
     const x1 = Math.floor(x)

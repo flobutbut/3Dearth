@@ -157,10 +157,13 @@ Créer une visualisation 3D interactive de la Terre permettant d'explorer son é
 
 ### 2. Données d'Élévation 
 - **Génération des Données (Mode Simulation)** [100% ✅]
-  - Données générées via bruit de Perlin (1200×600)
+  - Données générées via bruit de Perlin (4800×9600)
+  - Réduction à 2400×4800 points avec interpolation cubique
   - Distribution terre/mer réaliste (30/70%)
   - Élévations proportionnelles (-11034m à +8848m)
   - Variations selon la latitude
+  - Taille optimisée (44 MB)
+  - Haute qualité de préservation des détails
 
 - **Données Réelles (Mode Production)** [0% ❌]
   - Intégration ETOPO1
@@ -173,6 +176,7 @@ Créer une visualisation 3D interactive de la Terre permettant d'explorer son é
   - Calcul proportionnel des élévations
   - Application directe sans facteur d'échelle
   - Intégration avec le système de couleurs
+  - Performance optimisée pour la haute résolution
 
 ### 3. Frise Chronologique
 - **Interface Interactive** [40% 🔄]
@@ -497,4 +501,110 @@ Créer une visualisation 3D interactive de la Terre permettant d'explorer son é
 - Storybook
 - Tests
 - Exemples d'utilisation
-- Guide d'implémentation 
+- Guide d'implémentation
+
+# Documentation Fonctionnelle
+
+## Reconstruction des Plaques Tectoniques
+
+### Vue d'ensemble
+
+L'application permet de visualiser la reconstruction des plaques tectoniques sur les derniers 230 millions d'années. Cette fonctionnalité utilise les données de GPlates, un logiciel open-source de reconstruction tectonique.
+
+### Sources de données
+
+Nous utilisons deux ensembles de données principaux :
+
+1. **SETON2012**
+   - Données de rotation des plaques tectoniques
+   - Période couverte : 230-0 Ma
+   - Source : Seton et al. 2012
+   - Qualité : Données de référence largement utilisées
+
+2. **PLATES2013**
+   - Données de rotation globales
+   - Période couverte : 230-0 Ma
+   - Source : PLATES Project 2013
+   - Qualité : Mise à jour des données SETON2012
+
+### Fonctionnalités actuelles
+
+1. **Gestion des données**
+   - Vérification de l'intégrité des fichiers
+   - Parsing des fichiers de rotation
+   - Conversion au format JSON pour l'application
+
+2. **Visualisation** (en développement)
+   - Globe 3D interactif
+   - Timeline pour la sélection des époques
+   - Affichage des rotations de plaques
+
+### Utilisation prévue
+
+1. **Navigation temporelle**
+   - Sélection d'une époque via la timeline
+   - Visualisation instantanée de la configuration des plaques
+   - Animation possible entre différentes époques
+
+2. **Interaction avec le globe**
+   - Rotation libre de la vue
+   - Zoom sur des régions spécifiques
+   - Identification des plaques au clic
+
+3. **Informations complémentaires**
+   - Légende des plaques tectoniques
+   - Données sur les mouvements relatifs
+   - Statistiques par époque
+
+### Limitations actuelles
+
+1. **Données**
+   - Pas de support des frontières de plaques
+   - Pas de lignes de côte
+   - Résolution temporelle limitée à certaines époques
+
+2. **Visualisation**
+   - Pas d'interpolation entre les époques
+   - Pas de textures détaillées
+   - Performances à optimiser pour les animations
+
+### Évolutions futures
+
+1. **Données supplémentaires**
+   - Intégration des frontières de plaques
+   - Ajout des lignes de côte
+   - Support de données paléogéographiques
+
+2. **Améliorations visuelles**
+   - Textures géologiques
+   - Effets visuels pour les zones de subduction
+   - Marqueurs pour les événements géologiques majeurs
+
+3. **Fonctionnalités avancées**
+   - Export de données
+   - Comparaison d'époques
+   - Calculs de vitesse de déplacement
+
+### Guide d'utilisation
+
+1. **Démarrage**
+   - Chargement initial du globe
+   - Sélection de l'époque de départ
+   - Orientation de la vue
+
+2. **Navigation**
+   - Utilisation de la souris pour la rotation
+   - Zoom avec la molette
+   - Déplacement avec le clic droit
+
+3. **Analyse**
+   - Sélection des plaques
+   - Affichage des informations
+   - Utilisation de la timeline
+
+### Support
+
+Pour toute question ou problème :
+1. Consulter la documentation technique
+2. Vérifier les problèmes connus
+3. Contacter l'équipe de développement 
