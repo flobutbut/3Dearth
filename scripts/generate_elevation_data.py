@@ -50,16 +50,16 @@ def process_elevation_data():
     print("Traitement des données d'élévation...")
     
     # Dimensions de la grille augmentées
-    height, width = 2400, 4800  # Doublé pour plus de détails
+    height, width = 4800, 9600  # Dimensions réduites pour optimiser le temps de génération
     
     # Générer le bruit de Perlin de base pour les continents
     print("Génération des continents...")
     continents = generate_perlin_noise_2d(
         (height, width),
-        scale=200.0,  # Échelle augmentée pour des formations plus larges
-        octaves=12,   # Plus d'octaves pour plus de détails
-        persistence=0.55,  # Légèrement augmenté pour plus de variation
-        lacunarity=2.2,   # Augmenté pour plus de détails fins
+        scale=800.0,  # Échelle augmentée pour des formations plus larges
+        octaves=20,   # Plus d'octaves pour plus de détails
+        persistence=0.6,  # Augmenté pour plus de variation
+        lacunarity=2.1,   # Ajusté pour plus de détails naturels
         seed=42
     )
     
@@ -67,7 +67,7 @@ def process_elevation_data():
     continents = 2.0 * (continents - continents.min()) / (continents.max() - continents.min()) - 1.0
     
     # Appliquer une fonction sigmoïde pour accentuer la séparation terre/mer
-    continents = 1 / (1 + np.exp(-3 * continents))  # Augmenté à -3 pour une transition plus nette
+    continents = 1 / (1 + np.exp(-3 * continents))
     
     # Créer un masque pour séparer les océans des terres
     land_threshold = np.percentile(continents, 70)  # 30% de terres
@@ -82,10 +82,10 @@ def process_elevation_data():
     print("Génération des reliefs terrestres...")
     terrain_detail = generate_perlin_noise_2d(
         (height, width),
-        scale=100.0,  # Échelle réduite pour plus de détails
-        octaves=8,    # Plus d'octaves
-        persistence=0.65,  # Augmenté pour plus de variation
-        lacunarity=2.4,   # Augmenté pour plus de détails fins
+        scale=400.0,  # Échelle augmentée pour plus de détails
+        octaves=16,   # Plus d'octaves
+        persistence=0.7,  # Augmenté pour plus de variation
+        lacunarity=2.2,   # Ajusté pour plus de naturel
         seed=43
     )
     
@@ -93,10 +93,10 @@ def process_elevation_data():
     print("Génération des micro-reliefs...")
     micro_detail = generate_perlin_noise_2d(
         (height, width),
-        scale=50.0,   # Petite échelle pour les micro-reliefs
-        octaves=6,
-        persistence=0.45,
-        lacunarity=2.8,
+        scale=200.0,   # Échelle augmentée pour les micro-reliefs
+        octaves=12,    # Plus d'octaves
+        persistence=0.5,
+        lacunarity=2.5,
         seed=45
     )
     
@@ -104,10 +104,10 @@ def process_elevation_data():
     print("Génération des reliefs océaniques...")
     ocean_detail = generate_perlin_noise_2d(
         (height, width),
-        scale=150.0,  # Grande échelle pour les reliefs océaniques
-        octaves=6,
-        persistence=0.45,
-        lacunarity=2.2,
+        scale=600.0,  # Échelle augmentée pour les reliefs océaniques
+        octaves=14,   # Plus d'octaves
+        persistence=0.5,
+        lacunarity=2.3,
         seed=44
     )
     
@@ -121,28 +121,27 @@ def process_elevation_data():
     # Appliquer les élévations avec micro-reliefs
     # Terres émergées : de 0m à 8848m (hauteur de l'Everest)
     elevation[land_mask] = (
-        continents_normalized[land_mask] * 7000 +    # Élévation de base (0 à 7000m)
-        terrain_detail[land_mask] * 1500 +          # Variation du terrain (±1500m)
-        micro_detail[land_mask] * 348              # Micro-relief (±348m)
+        continents_normalized[land_mask] * 8848 +    # Élévation de base (0 à 8848m)
+        terrain_detail[land_mask] * 2000 +          # Variation du terrain (±2000m)
+        micro_detail[land_mask] * 500              # Micro-relief (±500m)
     ).astype(np.float32)
     
     # Océans : de 0m à -11034m (fosse des Mariannes)
     ocean_depth = (
         -200 +  # Profondeur minimale des plateaux continentaux
-        -10334 * (land_threshold - continents[~land_mask]) / land_threshold +  # Variation de profondeur
-        300 * ocean_detail[~land_mask] +  # Détails du fond océanique (±300m)
-        200 * micro_detail[~land_mask]    # Micro-relief océanique (±200m)
+        -11034 * (land_threshold - continents[~land_mask]) / land_threshold +  # Variation de profondeur
+        500 * ocean_detail[~land_mask] +  # Détails du fond océanique (±500m)
+        300 * micro_detail[~land_mask]    # Micro-relief océanique (±300m)
     ).astype(np.float32)
     elevation[~land_mask] = ocean_depth
     
     # Assurer que les valeurs restent dans des limites réalistes
-    elevation = np.clip(elevation, -11034, 8848)  # Limites réelles min/max de la Terre
+    elevation = np.clip(elevation, -11034, 8848)
     
     # Ajouter un effet de latitude plus nuancé
     lat = np.linspace(-90, 90, height)
     lat_factor = np.ones((height, width))
     for i in range(height):
-        # Effet plus complexe basé sur la latitude
         lat_abs = abs(lat[i])
         if lat_abs < 23.5:  # Zone équatoriale
             lat_effect = 1.0
@@ -152,24 +151,14 @@ def process_elevation_data():
             lat_effect = 0.7 - 0.2 * (lat_abs - 45) / 45
         
         lat_factor[i, :][land_mask[i, :]] = lat_effect
-        lat_factor[i, :][~land_mask[i, :]] = 0.8 + 0.2 * lat_effect  # Effet atténué pour les océans
+        lat_factor[i, :][~land_mask[i, :]] = 0.8 + 0.2 * lat_effect
     
     elevation *= lat_factor
     
     # Réduire la résolution avec une méthode plus précise
     print("Réduction de la résolution...")
-    # Utiliser une fenêtre glissante pour la réduction
-    reduced_height = height // 2
-    reduced_width = width // 2
-    elevation_reduced = np.zeros((reduced_height, reduced_width), dtype=np.float32)
-    
-    for i in range(reduced_height):
-        for j in range(reduced_width):
-            # Moyenne pondérée des 4 points
-            i2, j2 = i * 2, j * 2
-            window = elevation[i2:i2+2, j2:j2+2]
-            weights = np.array([[0.25, 0.25], [0.25, 0.25]])  # Poids égaux pour éviter les artefacts
-            elevation_reduced[i, j] = np.sum(window * weights)
+    # Utiliser scipy.ndimage.zoom pour une meilleure interpolation
+    elevation_reduced = zoom(elevation, 0.5, order=3)  # order=3 pour une interpolation cubique
     
     # Convertir en float32
     elevation_reduced = elevation_reduced.astype(np.float32)
