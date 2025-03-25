@@ -201,12 +201,32 @@ Créer une visualisation 3D interactive de la Terre permettant d'explorer son é
     * Collines : vert foncé à marron (40-70%)
     * Montagnes : marron à gris (70-85%)
     * Sommets : gris à blanc neigeux (85-100%)
-  - Adaptation climatique [0% ❌] :
-    * Variation des teintes selon la latitude
-    * Ajustement des couleurs selon le climat
-    * Transitions naturelles entre zones climatiques
-    * Influence des saisons sur la végétation
-    * Représentation des zones de glace polaires
+
+- **Adaptation Environnementale** [0% ❌]
+  - Influences climatiques :
+    * Température par latitude (neige, glace)
+    * Précipitations (végétation, déserts)
+    * Biomes (variations de couleurs)
+  - Influences océaniques :
+    * Température des eaux
+    * Circulation et productivité
+    * Chimie (pH, oxygène)
+  - Influences biologiques :
+    * Distribution de la biomasse
+    * Types d'écosystèmes
+    * Production primaire
+  - Influences atmosphériques :
+    * Aérosols et particules
+    * Albédo et luminosité
+    * Protection UV (végétation)
+  - Influences géochimiques :
+    * Altération des roches
+    * Composition des sédiments
+    * Minéralogie exposée
+  - Influences des événements :
+    * Éruptions volcaniques
+    * Périodes glaciaires
+    * Anoxies océaniques
 
 - **Adaptation Temporelle** [0% ❌]
   - Évolution des couleurs

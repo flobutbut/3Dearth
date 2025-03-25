@@ -13,7 +13,7 @@ Ce document décrit **l'implémentation technique actuelle** du projet. Il doit 
 
 ## État Actuel : Mode Simulation
 
-Le projet fonctionne actuellement en mode simulation, utilisant des données générées procéduralement :
+Le projet fonctionne actuellement en mode simulation, utilisant des données générées procéduralement.
 
 ### Génération des Données
 - Script : `generate_elevation_data.py`
@@ -71,547 +71,294 @@ src/
 └── composables/         # Composables Vue pour la réutilisation de la logique
 ```
 
-## Pattern Singleton
-
-Le projet utilise le pattern Singleton pour la gestion des services. Chaque service implémente son propre pattern Singleton de manière indépendante, ce qui permet une meilleure gestion des types et une meilleure isolation des services.
-
-Exemple d'implémentation :
-```typescript
-export class ServiceExample {
-  private static instance: ServiceExample | null = null;
-
-  private constructor() {
-    // Initialisation du service
-  }
-
-  public static getInstance(): ServiceExample {
-    if (!ServiceExample.instance) {
-      ServiceExample.instance = new ServiceExample();
-    }
-    return ServiceExample.instance;
-  }
-}
-
-// Export de l'instance unique
-export const serviceExample = ServiceExample.getInstance();
-export default serviceExample;
-```
-
-Les services suivants utilisent ce pattern :
-- `ElevationService` : Gestion des données d'élévation
-- `ColorService` : Gestion des couleurs et textures
-- `GeologicalService` : Gestion des données géologiques
-- `DataService` : Gestion des sources de données
-- `APIService` : Gestion des requêtes externes
-- `CacheService` : Gestion du cache local
-
-### Services Utilisant le Pattern
-- ElevationService
-- ColorService
-- GeologicalService
-- DataService
-- APIService
-- CacheService
-
-## Services Techniques
+## Services Implémentés
 
 ### ElevationService
-- Pattern Singleton
-- Gestion des données d'élévation
-  - Format : Float32Array (binaire)
-  - Dimensions : 1200×600 points
-  - Plage : -4087m à +5853m
-  - Rayon terrestre : 6 371 000m
-- Méthodes techniques
-  - `loadElevationData(): Promise<void>`
-    - Charge les données depuis `/data/elevation/etopo1_simplified.bin`
-    - Calcule les statistiques (min/max)
-  - `getElevationAtPoint(lat: number, lon: number): number`
-    - Convertit les coordonnées en indices
-    - Gestion des limites de la grille
-  - `applyElevationToGeometry(geometry: THREE.BufferGeometry): void`
-    - Calcul précis des élévations proportionnelles
-    - Application directe sans facteur d'échelle arbitraire
-    - Déformation basée sur le ratio élévation/rayon terrestre
-    - Mise à jour des positions des vertices
+Service de gestion des données d'élévation.
+
+#### Configuration
+- Format : Float32Array (binaire)
+- Dimensions : 2400×1200 points
+- Plage : -11034m à +8848m
+- Rayon terrestre : 6 371 000m
+
+#### Méthodes Principales
+- `loadElevationData(): Promise<void>`
+  * Charge les données depuis `/data/elevation/etopo1_simplified.bin`
+  * Calcule les statistiques (min/max)
+
+- `getElevationAtPoint(lat: number, lon: number): number`
+  * Interpolation bilinéaire des élévations
+  * Normalisation des coordonnées (-180° à 180° pour la longitude, -90° à 90° pour la latitude)
+
+- `applyElevationToGeometry(geometry: THREE.BufferGeometry): void`
+  * Application des élévations à la géométrie sphérique
+  * Calcul proportionnel au rayon terrestre
+  * Mise à jour des normales
+  * Statistiques détaillées (min/max/moyenne)
 
 ### ColorService
-- Pattern Singleton
-- Système de couleurs avancé avec transitions douces
-  - Format : HSL avec interpolation linéaire
-  - Transitions progressives via smoothstep
-  - Optimisation des transitions de teintes
-  - Gestion des zones d'élévation avec seuils adaptés
-  - Optimisation des buffers
-- Méthodes techniques
-  - `smoothstep(edge0: number, edge1: number, x: number): number`
-    - Fonction de lissage pour transitions douces
-    - Limite les valeurs entre 0 et 1
-    - Courbe de Hermite cubique (3t² - 2t³)
-  - `lerpHSL(h1: number, s1: number, l1: number, h2: number, s2: number, l2: number, t: number): THREE.Color`
-    - Interpolation linéaire entre deux couleurs HSL
-    - Gestion de la transition circulaire des teintes
-    - Normalisation des valeurs HSL
-  - `getColorForPosition(elevation: number, lat: number, lon: number): THREE.Color`
-    - Océans (-11034m à 0m)
-      - Bleu clair (HSL: 0.6, 0.65, 0.5) pour eaux peu profondes
-      - Bleu foncé (HSL: 0.63, 0.9, 0.2) pour abysses
-    - Terres (0m à 8848m)
-      - Plages (0-15%) : beige à vert clair
-      - Plaines (15-40%) : vert clair à vert foncé
-      - Collines (40-70%) : vert foncé à marron-vert
-      - Montagnes (70-85%) : marron-vert à gris-marron
-      - Sommets (85-100%) : gris-marron à blanc neigeux
-  - `applyColorsToGeometry(geometry: THREE.BufferGeometry): void`
-    - Application des couleurs par vertex
-    - Calcul des coordonnées sphériques
-    - Statistiques d'élévation en temps réel
-    - Optimisation des buffers de couleur
+Service de gestion des couleurs pour la visualisation du globe.
+
+#### Configuration
+- Niveau de la mer : 0m
+- Élévation maximale : 8848m (Everest)
+- Élévation minimale : -11034m (Fosse des Mariannes)
+- Ligne de neige de base : 60% de l'altitude maximale
+- Facteur d'influence latitudinal : 0.4
+
+#### Méthodes Principales
+- `getColorForPosition(elevation: number, latitude: number, longitude: number): THREE.Color`
+  * Calcule la couleur en fonction de l'élévation et de la position
+  * Gère les transitions entre les différentes zones
+  * Prend en compte l'influence de la latitude
+
+- `applyColorsToGeometry(geometry: THREE.SphereGeometry, getElevation: (lat: number, lon: number) => number): void`
+  * Applique les couleurs à la géométrie du globe
+  * Utilise les attributs de couleur de Three.js
+  * Calcule et affiche les statistiques d'élévation
 
 ### GeologicalService
-- Pattern Singleton
-- Gestion des données temporelles
-  - Format : GeoJSON
-  - Interpolation temporelle
-  - Synchronisation avec le globe
-- Interfaces
-  ```typescript
-  interface PlateData {
-    id: number
-    name: string
-    coordinates: number[][] // [latitude, longitude]
-    elevation: number
-  }
+Service de gestion des données géologiques et de la dérive des continents.
 
-  interface GeologicalEpoch {
-    time: number // En millions d'années
-    plates: PlateData[]
-  }
-  ```
-- Méthodes techniques
-  - `loadEpochData(time: number): Promise<void>`
-    - Charge les données pour une époque spécifique
-    - Gestion du chargement asynchrone
-    - Prévention des chargements multiples
-  - `applyToGeometry(geometry: THREE.SphereGeometry, time: number): void`
-    - Applique les déformations à la géométrie
-    - Synchronisation avec la timeline
-  - `interpolateEpochs(time1: number, time2: number, progress: number): PlateData[]`
-    - Calcule l'interpolation entre deux époques
-    - Interpolation linéaire des coordonnées et élévations
-    - Retourne les données interpolées
+#### Structure de Données
+```typescript
+interface PlateData {
+  id: number
+  name: string
+  coordinates: number[][] // [latitude, longitude]
+  elevation: number
+}
+
+interface GeologicalEpoch {
+  time: number // millions d'années
+  plates: PlateData[]
+}
+```
+
+#### Méthodes Principales
+- `loadEpochData(time: number): Promise<void>`
+  * Charge les données pour une époque donnée
+  * Gestion des erreurs et état de chargement
+
+- `applyToGeometry(geometry: THREE.SphereGeometry, time: number): void`
+  * Applique les données géologiques à la géométrie
+  * TODO: Implémentation de la déformation de la géométrie
+
+- `interpolateEpochs(time1: number, time2: number, progress: number): PlateData[]`
+  * Interpole les positions des plaques entre deux époques
+  * Gestion des coordonnées et élévations
+  * Calcul des positions intermédiaires
 
 ## Stores Pinia
 
 ### TimelineStore
-- Gestion de l'état temporel
-- Synchronisation avec le globe
-- Gestion des événements géologiques
+Store de gestion de la timeline géologique.
 
-### ElevationStore
-- Gestion des données d'élévation
-- Cache des calculs
-- Mise à jour des visualisations
+#### État
+```typescript
+{
+  currentTime: 0,
+  isPlaying: false,
+  playbackSpeed: 1,
+  timeRange: {
+    min: -250, // Début du Permien
+    max: 0     // Présent
+  }
+}
+```
 
-### GeologicalStore
-- Store responsable de la gestion des données géologiques.
-- État :
-  - `plates` : Liste des plaques tectoniques
-  - `selectedPlateId` : ID de la plaque sélectionnée
-  - `visibleLayers` : Couches visibles
-  - `interpolationProgress` : Progression de l'interpolation
-  - `currentEpoch` et `nextEpoch` : Époques pour l'interpolation
-- Actions principales :
-  - `loadEpochData(time: number)`
-  - `selectPlate(plateId: number)`
-  - `toggleLayer(layer: string)`
-  - `setInterpolationProgress(progress: number)`
+#### Fonctionnalités Implémentées
+- Gestion du temps actuel
+- Contrôles de lecture (play/pause)
+- Ajustement de la vitesse
+- Limites temporelles
+- Formatage du temps
 
 ### SearchStore
-- Store responsable de la gestion de la recherche.
-- État :
-  - `query` : Requête de recherche
-  - `results` : Résultats de recherche
-  - `filters` : Filtres de recherche (type, période)
-  - `recentSearches` : Historique des recherches
-- Actions principales :
-  - `search(query: string)`
-  - `selectResult(resultId: string)`
-  - `clearSearch()`
-  - `setTimeRange(min: number, max: number)`
-  - `toggleTypeFilter(type: string)`
+Store de gestion de la recherche.
 
-### SettingsStore
-- Store responsable de la gestion des paramètres de l'application.
-- État :
-  - `visualization` : Paramètres de visualisation (qualité, résolution)
-  - `colors` : Paramètres de couleurs et thèmes
-  - `camera` : Configuration de la caméra
-  - `performance` : Paramètres de performance
-  - `interface` : Paramètres d'interface (langue, thème)
-- Actions principales :
-  - `setQuality(quality: string)`
-  - `setColorScheme(scheme: string)`
-  - `setCameraDefaults()`
-  - `toggleShadows(enabled: boolean)`
-  - `setLanguage(language: string)`
-  - `setTheme(theme: string)`
-
-## Composants Techniques
-
-### Earth.vue
-- Géométrie sphérique
-  - Résolution : 512×512 segments
-  - Rayon de base : 10 unités
-  - Élévations proportionnelles au rayon terrestre (6 371 000m)
-  - Variations d'élévation réalistes :
-    - Minimum : 9.9936 unités (-4087m)
-    - Maximum : 10.0092 unités (+5853m)
-- Configuration de la caméra
-  - FOV : 45°
-  - Near plane : 1
-  - Far plane : 2000
-  - Position initiale : (0, 5, 15)
-- Contrôles orbitaux
-  - Zoom : 5-50 unités
-  - Rotation : avec amortissement (dampingFactor: 0.05)
-  - Pan : désactivé
-  - Vitesse de rotation : 0.5
-  - Vitesse de zoom : 0.5
-- Éclairage
-  - Lumière ambiante : 0x666666
-  - Lumière directionnelle principale : 0xffffff (intensité: 1.0)
-  - Lumière de contre-jour : 0xffffff (intensité: 0.3)
-- Intégration avec les services
-  - ElevationService : déformation proportionnelle du terrain
-  - ColorService : coloration basée sur l'élévation réelle
-  - GeologicalService : déformation temporelle
-
-### Timeline.vue
-- Gestion des époques
-  - Échelle logarithmique
-  - Synchronisation avec le globe
-  - Transitions fluides
-- Intégration avec TimelineStore
-
-## Tests Techniques
-
-### Configuration des Tests
-- Vitest pour les tests unitaires
-- Vue Test Utils pour les composants
-- Coverage reporting
-- Tests automatisés
-
-### Tests Unitaires
+#### État
 ```typescript
-// Exemple de test pour ElevationService
-describe('ElevationService', () => {
-  it('should calculate elevation correctly', () => {
-    const elevation = elevationService.getElevationAtPoint(0, 0)
-    expect(elevation).toBeDefined()
-  })
-})
-
-// Exemple de test pour ColorService
-describe('ColorService', () => {
-  it('should apply colors correctly', () => {
-    const color = colorService.getColorForPosition(1000, 0, 0)
-    expect(color).toBeDefined()
-  })
-})
-
-// Exemple de test pour GeologicalService
-describe('GeologicalService', () => {
-  it('should load geological data', () => {
-    const data = geologicalService.loadGeologicalData()
-    expect(data).toBeDefined()
-  })
-})
-```
-
-## Optimisations Techniques
-
-### Performance
-- Utilisation de WebGL
-- Optimisation des buffers
-- Chargement progressif
-- Gestion de la mémoire
-
-### Rendu 3D
-- Shaders personnalisés
-- LOD (Level of Detail)
-- Culling des faces
-- Optimisation des textures
-
-### Données
-- Format binaire optimisé
-- Compression des données
-- Cache des calculs
-- Chargement asynchrone
-
-## Configuration Technique
-
-### Installation
-```bash
-# Installation des dépendances
-yarn install
-
-# Démarrage du serveur de développement
-yarn dev
-
-# Build de production
-yarn build
-
-# Lancement des tests
-yarn test
-```
-
-### Configuration Vite
-```typescript
-// vite.config.ts
-export default defineConfig({
-  plugins: [vue()],
-  resolve: {
-    alias: {
-      '@': '/src'
-    }
-  }
-})
-```
-
-### Configuration TypeScript
-```json
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "lib": ["ESNext", "DOM"],
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "preserve",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
+  query: '',
+  results: [],
+  isSearching: false,
+  selectedResultId: null,
+  recentSearches: [],
+  filters: {
+    types: ['location', 'event', 'plate'],
+    timeRange: {
+      min: null,
+      max: null
     }
   }
 }
 ```
 
-## Sécurité Technique
+#### Fonctionnalités Implémentées
+- Structure de base
+- Système de filtrage
+- Gestion de l'historique
+- Interface de recherche
+- Données de test
 
-### Protection des Données
-- Validation des entrées
-- Sanitization des données
-- Gestion des erreurs
-- Logs techniques
+### GeologicalStore
+Store de gestion des données géologiques.
 
-### Performance
-- Monitoring des FPS
-- Profiling mémoire
-- Optimisation des assets
-- Cache management
+#### État
+```typescript
+{
+  plates: [],
+  isLoading: false,
+  selectedPlateId: null,
+  visibleLayers: ['plates', 'boundaries'],
+  interpolationProgress: 0,
+  currentEpoch: null,
+  nextEpoch: null
+}
+```
 
-## Intégrations de Données Externes
+#### Fonctionnalités Implémentées
+- Structure de base
+- Système d'interpolation
+- Gestion des couches
+- Sélection des plaques
 
-### GPlates (En cours de développement)
-- **Format de Données**
-  - GeoJSON pour les plaques tectoniques
-  - CSV pour les données temporelles
-  - Binaire pour les modèles 3D
-- **Intégration Technique**
-  - API REST pour les requêtes
-  - WebSocket pour les mises à jour en temps réel
-  - Cache local des données fréquentes
-- **Métadonnées**
-  - Version des données
-  - Source et date d'acquisition
-  - Précision et résolution
+### SettingsStore
+Store de gestion des paramètres.
 
-### Données Météorologiques (Planifié)
-- **Sources**
-  - OpenWeatherMap API
-  - NOAA Climate Data
-  - ECMWF (European Centre for Medium-Range Weather Forecasts)
-- **Format**
-  - JSON pour les données actuelles
-  - NetCDF pour les données historiques
-  - GeoTIFF pour les cartes
-- **Intégration**
-  - Mise à jour en temps réel
-  - Historique des données
-  - Projection sur le globe
+#### État
+```typescript
+{
+  visualization: {
+    quality: 'medium',
+    resolution: 1,
+    showGrid: true,
+    showLabels: true,
+    showCoordinates: false
+  },
+  colors: {
+    scheme: 'default',
+    oceanOpacity: 1,
+    landOpacity: 1,
+    customColors: {
+      ocean: '#1e4d6b',
+      land: '#2d5016',
+      mountains: '#4a4a4a',
+      ice: '#ffffff'
+    }
+  },
+  camera: {
+    fov: 45,
+    near: 0.1,
+    far: 1000,
+    defaultPosition: { x: 0, y: 0, z: 10 },
+    defaultTarget: { x: 0, y: 0, z: 0 },
+    rotationSpeed: 1,
+    zoomSpeed: 1,
+    minDistance: 5,
+    maxDistance: 20
+  },
+  performance: {
+    enableShadows: true,
+    enablePostProcessing: true,
+    maxFPS: 60,
+    autoQuality: true
+  },
+  interface: {
+    language: 'fr',
+    theme: 'auto',
+    showTooltips: true,
+    showTutorial: true
+  }
+}
+```
 
-### Données Archéologiques (Planifié)
-- **Sources**
-  - OpenContext
-  - tDAR (the Digital Archaeological Record)
-  - ARIADNE
-- **Format**
-  - GeoJSON pour les sites
-  - XML pour les métadonnées
-  - RDF pour les relations
-- **Intégration**
-  - Visualisation des sites
-  - Chronologie des découvertes
-  - Relations entre sites
+#### Fonctionnalités Implémentées
+- Gestion des paramètres de visualisation
+- Schémas de couleurs
+- Configuration de la caméra
+- Options de performance
+- Préférences d'interface
+- Persistance locale
 
-### Système de Gestion des Données (Planifié)
-- **Architecture**
-  - Base de données PostgreSQL avec PostGIS
-  - Cache Redis pour les données fréquentes
-  - Système de versioning des données
-- **APIs**
-  - REST pour les requêtes standard
-  - GraphQL pour les requêtes complexes
-  - WebSocket pour les mises à jour
-- **Sécurité**
-  - Authentification OAuth2
-  - Rate limiting
-  - Validation des données
+## Composants
 
-### Services d'Intégration (En cours de développement)
-- **DataService**
-  - Pattern Singleton
-  - Gestion des sources de données
-  - Cache et mise à jour
-  - Validation des données
-- **APIService**
-  - Gestion des requêtes externes
-  - Gestion des erreurs
-  - Retry et fallback
-- **CacheService**
-  - Gestion du cache local
-  - Invalidation intelligente
-  - Compression des données
+### Earth.vue
+Composant principal de visualisation de la Terre en 3D.
+
+#### Configuration Three.js
+- Scene : Fond noir
+- Camera : Perspective (FOV 45°)
+- Renderer : WebGL avec antialiasing
+- Géométrie : Sphère (rayon 10, 512 segments)
+
+#### Éclairage
+- Lumière ambiante : 0x666666
+- Lumière directionnelle principale : (5, 3, 5), intensité 1
+- Lumière directionnelle secondaire : (-5, -3, -5), intensité 0.3
+
+#### Contrôles
+- Rotation fluide (dampingFactor 0.05)
+- Zoom (vitesse 0.5, distance 5-50)
+- Pan désactivé
+- Rotation automatique désactivée
+
+#### Intégration
+- ElevationService pour le relief
+- ColorService pour la coloration
+- GeologicalService pour la dérive
+- TimelineStore pour la synchronisation
+
+### Timeline.vue
+Composant de navigation temporelle.
+
+#### Structure
+- Affichage de la date (format "X Ga")
+- Description de l'époque
+- Barre de progression
+- Points d'événements
+
+#### Événements Majeurs
+1. Formation de la Terre (4.5 Ga)
+2. Premiers océans (4.0 Ga)
+3. Première vie (3.5 Ga)
+4. Grande oxydation (2.5 Ga)
+5. Supercontinent Rodinia (1.0 Ga)
+6. Explosion cambrienne (0.5 Ga)
+7. Dinosaures (0.2 Ga)
+8. Extinction K-T (0.065 Ga)
+9. Époque moderne (0.002 Ga)
+
+#### Fonctionnalités
+- Navigation par glisser-déposer
+- Support tactile
+- Calcul de position temporelle
+- Détection d'événements
+- Transitions fluides
 
 ## Design System
 
-### Tokens
-- **Colors**
-  ```typescript
-  colors: {
-    primary: { 50: string, ..., 900: string }
-    gray: { 50: string, ..., 900: string }
-    success: { light: string, dark: string }
-    warning: { light: string, dark: string }
-    error: { light: string, dark: string }
-    info: { light: string, dark: string }
-  }
-  ```
+### Tokens de Base
+- **Couleurs**
+  - Primary : #0087FF
+  - Gray : #495057
+  - Success : #2E7D32
+  - Warning : #ED6C02
+  - Error : #D32F2F
+  - Info : #0288D1
 
-- **Typography**
-  ```typescript
-  typography: {
-    fontFamily: {
-      sans: string
-      mono: string
-    }
-    fontSize: {
-      xs: string
-      sm: string
-      base: string
-      lg: string
-      xl: string
-      '2xl': string
-      // ...
-    }
-    fontWeight: {
-      light: number
-      normal: number
-      medium: number
-      bold: number
-    }
-  }
-  ```
+- **Typographie**
+  - Sans-serif : Inter, system-ui
+  - Monospace : JetBrains Mono
+  - Tailles : xs (12px) à 4xl (30px)
 
-- **Spacing**
-  ```typescript
-  spacing: {
-    0: string
-    1: string
-    2: string
-    // ...
-    32: string
-  }
-  ```
+- **Espacement**
+  - Base : 4px
+  - Échelle : 0.5x à 8x
 
 - **Layout**
-  ```typescript
-  layout: {
-    borderRadius: {
-      none: string
-      sm: string
-      md: string
-      lg: string
-      full: string
-    }
-    boxShadow: {
-      none: string
-      sm: string
-      md: string
-      lg: string
-    }
-  }
-  ```
-
-### Composants
-
-#### Timeline.vue
-- **Structure**
-  ```vue
-  <template>
-    <div class="timeline">
-      <div class="timeline-content">
-        <div class="timeline-info">...</div>
-        <div class="timeline-progress">...</div>
-        <div class="timeline-events">...</div>
-      </div>
-    </div>
-  </template>
-  ```
-
-- **Fonctionnalités**
-  - Navigation temporelle libre
-  - Points d'événements avec tooltips
-  - Curseur de progression
-  - Support tactile et souris
-  - Mode sombre/clair
-
-- **État**
-  ```typescript
-  interface TimelineEvent {
-    date: string
-    title: string
-    description: string
-    timestamp: number
-  }
-
-  const currentPosition = ref(0)
-  const isDragging = ref(false)
-  ```
-
-- **Méthodes**
-  ```typescript
-  const getCurrentTimestamp = (percentage: number): number
-  const getEventPosition = (timestamp: number): number
-  const findClosestEvent = (timestamp: number): TimelineEvent
-  const startDragging = (event: MouseEvent | TouchEvent): void
-  const handleDrag = (event: MouseEvent | TouchEvent): void
-  const stopDragging = (): void
-  const goToEvent = (event: TimelineEvent): void
-  ```
-
-- **Styles**
-  - Utilisation des tokens de design
-  - Support du mode sombre
-  - Animations fluides
-  - Gestion des z-index pour les tooltips 
+  - Border radius : none, sm, md, lg, full
+  - Box shadow : none, sm, md, lg
+  - Z-index : base (0) à tooltip (80)
